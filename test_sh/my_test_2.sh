@@ -45,12 +45,22 @@ use_nvm="true"
 report_fillrandom_latency="true"
 key_size="16"
 
-histogram="false"
+histogram="true"
 statistics="true"
 
 stats_interval="5000000"
 
-cache_size="16106127360" #15G
+# cache_size="16106127360" #15G
+cache_size="1073741824" #1G
+
+# Added to align with the other configuration
+max_background_flushes="1"
+max_background_compactions="3"
+write_buffer_size="134217728"
+disable_wal="false"
+level0_file_num_compaction_trigger="4"
+max_write_buffer_number="2"
+block_align="true"
 
 bench_file_path="$(dirname $PWD )/db_bench"
 
@@ -86,6 +96,13 @@ RUN_ONE_TEST() {
     --statistics=$statistics \
     --stats_interval=$stats_interval \
     --cache_size=$cache_size \
+    --max_background_flushes=$max_background_flushes \
+    --max_background_compactions=$max_background_compactions \
+    --write_buffer_size=$write_buffer_size \
+    --disable_wal=$disable_wal \
+    --level0_file_num_compaction_trigger=$level0_file_num_compaction_trigger \
+    --max_write_buffer_number=$max_write_buffer_number \
+    --block_align=$block_align \
     "
 
     cmd="$bench_file_path $const_params >>out.out 2>&1"
