@@ -3337,6 +3337,8 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
   void InitializeOptionsFromFlags(Options* opts) {
     printf("Initializing RocksDB Options from command-line flags\n");
+    fprintf(stderr, "db_write_buffer_size is: %ld\n", FLAGS_db_write_buffer_size);
+    fprintf(stderr, "write_buffer_size is: %ld\n", FLAGS_write_buffer_size);
     Options& options = *opts;
 
     assert(db_.db == nullptr);
