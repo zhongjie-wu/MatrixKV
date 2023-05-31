@@ -12,7 +12,7 @@
 
 
 long items; //initialized in init_zipf_generator function
-long baseZipf; //initialized in init_zipf_generator function
+long base; //initialized in init_zipf_generator function
 double zipfianconstant; //initialized in init_zipf_generator function
 double alpha; //initialized in init_zipf_generator function
 double zetan; //initialized in init_zipf_generator function
@@ -24,7 +24,7 @@ long lastVal; //initialized in setLastValue
 
 void init_zipf_generator(long min, long max){
 	items = max-min+1;
-	baseZipf = min;
+	base = min;
 	zipfianconstant = 0.99;
 	theta = zipfianconstant;
 	zeta2theta = zeta(0, 2, 0);
@@ -52,7 +52,7 @@ double zetastatic(long st, long n, double initialsum){
 }
 
 long nextLong(long itemcount){
-	//from "Quickly Generating Billion-Record Synthetic DatabaseZipfs", Jim Gray et al, SIGMOD 1994
+	//from "Quickly Generating Billion-Record Synthetic Databases", Jim Gray et al, SIGMOD 1994
 	if (itemcount!=countforzeta){
 		if (itemcount>countforzeta){
 			printf("WARNING: Incrementally recomputing Zipfian distribtion. (itemcount= %ld; countforzeta= %ld)", itemcount, countforzeta);
@@ -61,17 +61,17 @@ long nextLong(long itemcount){
 			eta = ( 1 - pow(2.0/items,1-theta) ) / (1-zeta2theta/zetan);
 		} 
 	}
-
+	
 	double u = (double)rand() / ((double)RAND_MAX);
 	double uz=u*zetan;
 	if (uz < 1.0){
-		return baseZipf;
+		return base;
 	}
-
+	
 	if (uz<1.0 + pow(0.5,theta)) {
-		return baseZipf + 1;
+		return base + 1;
 	}
-	long ret = baseZipf + (long)((itemcount) * pow(eta*u - eta + 1, alpha));
+	long ret = base + (long)((itemcount) * pow(eta*u - eta + 1, alpha));
 	setLastValue(ret);
 	return ret;
 }
@@ -83,3 +83,4 @@ long nextValue() {
 void setLastValue(long val){
 	lastVal = val;
 }
+

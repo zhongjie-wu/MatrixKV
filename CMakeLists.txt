@@ -167,6 +167,7 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zi /nologo /EHsc /GS /Gd /GR /GF /fp:precise /Zc:wchar_t /Zc:forScope /errorReport:queue")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /FC /d2Zi+ /W4 /wd4127 /wd4800 /wd4996 /wd4351 /wd4100 /wd4204 /wd4324")
 else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wextra -Wall")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsign-compare -Wshadow -Wno-unused-parameter -Wno-unused-variable -Woverloaded-virtual -Wnon-virtual-dtor -Wno-missing-field-initializers -Wno-strict-aliasing")
   if(MINGW)
@@ -606,6 +607,7 @@ set(SOURCES
         util/filter_policy.cc
         util/hash.cc
         util/jemalloc_nodump_allocator.cc
+        util/latest-generator.cc
         util/log_buffer.cc
         util/murmurhash.cc
         util/random.cc
@@ -622,6 +624,7 @@ set(SOURCES
         util/trace_replay.cc
         util/transaction_test_util.cc
         util/xxhash.cc
+        util/zipf.cc
         utilities/backupable/backupable_db.cc
         utilities/blob_db/blob_compaction_filter.cc
         utilities/blob_db/blob_db.cc

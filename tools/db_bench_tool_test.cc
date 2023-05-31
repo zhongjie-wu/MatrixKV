@@ -13,6 +13,7 @@
 #include "util/random.h"
 #include "util/testharness.h"
 #include "util/testutil.h"
+#include "util/latest-generator.h"
 
 #ifdef GFLAGS
 #include "util/gflags_compat.h"

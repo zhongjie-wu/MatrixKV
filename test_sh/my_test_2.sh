@@ -35,7 +35,7 @@ max_background_jobs="3"
 max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`" 
 #max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
-threads="1"
+threads="4"
 
 pmem_path="/mnt/pmem1/nvm"
 use_nvm="true"
@@ -84,7 +84,6 @@ RUN_ONE_TEST() {
     --value_size=$bench_value \
     --benchmarks=$bench_benchmarks \
     --num=$bench_num \
-    --reads=$bench_readnum \
     --key_size=$key_size \
     --compression_type=$bench_compression \
     --max_background_jobs=$max_background_jobs \
@@ -138,8 +137,7 @@ RUN_ALL_TEST() {
     for value in 1024; do
         CLEAN_CACHE
         bench_value="$value" # value size in bytes
-        bench_num="`expr $test_all_size / $bench_value`"
-	bench_readnum=$bench_num
+        bench_num="`expr $test_all_size / $bench_value / $threads`" # operations per thread
         RUN_ONE_TEST
         if [ $? -ne 0 ];then
             exit 1
