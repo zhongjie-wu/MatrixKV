@@ -1,15 +1,18 @@
 #!/bin/bash
 
-WORKSPACE="$(dirname $PWD )"
+WORKSPACE="$PWD"
+EXECUTABLE_DIR=$WORKSPACE
 RESULTS_DIR="${WORKSPACE}/setups_results"
 
 #real run configs
 NUM_RUNS=1
-LOADING_PHASE_NUM=50000000
+#LOADING_PHASE_NUM=50000000
+LOADING_PHASE_NUM=10000000
 LOADING_PHASE_THREADS=1
-EXECUTION_PHASE_NUM=100000000
-EXECUTION_PHASE_THREADS=8
-EXECUTION_PHASE_DUR=900
+#EXECUTION_PHASE_NUM=100000000
+EXECUTION_PHASE_NUM=200000
+EXECUTION_PHASE_THREADS=1
+EXECUTION_PHASE_DUR=90
 
 
 #system variable configs
@@ -21,7 +24,7 @@ VALUESIZE=1024
 BACKGROUND_FLUSHES=1
 BACKGROUND_COMPACTIONS=3
 CACHE_SIZE=1073741824
-STATS_INTERVAL=1
+STATS_INTERVAL=5
 HISTOGRAM="true"
 COMPRESSION_TYPE="none"
 WRITE_BUFFER_SIZE=134217728
@@ -34,7 +37,7 @@ STATISTICS="true"
 USE_NVM="true"
 PMEM_PATH="/mnt/pmem1/nvm"
 WAL_DIR="/data/mkv"
-report_ops_latency="true"
+report_ops_latency="false"
 report_fillrandom_latency="true"
 
 # ??
@@ -73,12 +76,14 @@ function add_db_bench_fixed_options {
     OPTS+=" --max_write_buffer_number=$MAX_WRITE_BUFFER_NUMBER"
 
     # New added fixed options
-    $OPTS+=" --statistics=$STATISTICS"
-    $OPTS+=" --use_nvm_module=$USE_NVM"
-    $OPTS+=" --pmem_path=$PMEM_PATH"
-    $OPTS+=" --wal_dir=$WAL_DIR"
-    $OPTS+=" --report_ops_latency=$report_ops_latency"
-    $OPTS+=" --report_fillrandom_latency=$report_fillrandom_latency"
+    OPTS+=" --statistics=$STATISTICS"
+    OPTS+=" --use_nvm_module=$USE_NVM"
+    OPTS+=" --pmem_path=$PMEM_PATH"
+    OPTS+=" --wal_dir=$WAL_DIR"
+    OPTS+=" --report_ops_latency=$report_ops_latency"
+    OPTS+=" --report_fillrandom_latency=$report_fillrandom_latency"
+
+    echo $OPTS
 }
 
 # $1: workload name
@@ -114,13 +119,22 @@ function run_db_bench {
     local ADITIONAL_VARIABLE_OPTS=""
     ADITIONAL_VARIABLE_OPTS+=" $(add_db_bench_variable_options $1)" #pass the extra flags
 
-    echo "=> workload opts: --benchmarks=$1 --num=$(($2 / $3)) --threads=$3 --db=$DB_DIR"
-    echo "=> aditional fixed opts: $ADITIONAL_FIXED_OPTS"
-    echo "=> aditional variable opts: $ADITIONAL_VARIABLE_OPTS"
+    # echo "=> workload opts: --benchmarks=$1 --num=$(($2 / $3)) --threads=$3 --db=$DB_DIR"
+    # echo "=> additional fixed opts: $ADITIONAL_FIXED_OPTS"
+    # echo "=> additional variable opts: $ADITIONAL_VARIABLE_OPTS"
+
 
     SECONDS=0
-    sudo -E numactl -N 0 -m 0 $PERF_CMD \
-    $EXECUTABLE_DIR/db_bench --benchmarks="$1" \
+
+    echo sudo $EXECUTABLE_DIR/db_bench --benchmarks="$1" \
+                             --num=$(($2 / $3)) \
+                             --threads=$3 \
+                             --db=$DB_DIR \
+                             $ADITIONAL_FIXED_OPTS \
+                             $ADITIONAL_VARIABLE_OPTS \
+    echo "=> elapsed time: ${SECONDS} s"
+
+    sudo $EXECUTABLE_DIR/db_bench --benchmarks="$1" \
                              --num=$(($2 / $3)) \
                              --threads=$3 \
                              --db=$DB_DIR \
@@ -139,26 +153,10 @@ CLEAN_CACHE() {
     sleep 2
 }
 
-COPY_OUT_FILE(){
-    mkdir $bench_file_dir/result > /dev/null 2>&1
-    res_dir=$bench_file_dir/result/value-$value_size
-    mkdir $res_dir > /dev/null 2>&1
-    \cp -f $bench_file_dir/compaction.csv $res_dir/
-    \cp -f $bench_file_dir/OP_DATA $res_dir/
-    \cp -f $bench_file_dir/OP_TIME.csv $res_dir/
-    \cp -f $bench_file_dir/out.out $res_dir/
-    \cp -f $bench_file_dir/Latency.csv $res_dir/
-    \cp -f $bench_file_dir/PerSecondLatency.csv $res_dir/
-    \cp -f $db/OPTIONS-* $res_dir/
-
-    #\cp -f $db/LOG $res_dir/
-}
-
-
 function setup1_loading {
     DB_DIR="/data/mkv"
 
-    run_db_bench "ycsbfill" $LOADING_PHASE_NUM $LOADING_PHASE_THREADS >>out.out 2>&1
+    run_db_bench "ycsbfill" $LOADING_PHASE_NUM $LOADING_PHASE_THREADS
 
     reset_opts
     CLEAN_CACHE
@@ -170,7 +168,7 @@ function setup1_execution {
     USE_EXISTING_DB="true"
     DURATION=$EXECUTION_PHASE_DUR
 
-    run_db_bench "ycsbwklda" $EXECUTION_PHASE_NUM $EXECUTION_PHASE_THREADS >>out.out 2>&1
+    run_db_bench "ycsbwkldc" $EXECUTION_PHASE_NUM $EXECUTION_PHASE_THREADS
 
     reset_opts
     CLEAN_CACHE
@@ -181,12 +179,17 @@ function setup1 {
 
     echo "Executing Setup-1"
 
-    local WORKLOAD_RESULTS_DIR="${RESULTS_DIR}/$SESSION_NAME/$(date '+%Y-%m-%d-%H-%M-%S')"
+    echo "RESULTS_DIR is $RESULTS_DIR"
+
+    local WORKLOAD_RESULTS_DIR="${RESULTS_DIR}/$SESSION_NAME-$(date '+%Y-%m-%d-%H-%M-%S')"
     mkdir -p $WORKLOAD_RESULTS_DIR
+    # echo $WORKLOAD_RESULTS_DIR
     local LOADING_RESULTS_DIR="${WORKLOAD_RESULTS_DIR}/loading"
     mkdir -p $LOADING_RESULTS_DIR
+    # echo $LOADING_RESULTS_DIR
     local EXECUTION_RESULTS_DIR="${WORKLOAD_RESULTS_DIR}/execution"
     mkdir -p $EXECUTION_RESULTS_DIR
+    # echo $EXECUTION_RESULTS_DIR
 
     { #LOADING PHASE
         setup1_loading
@@ -195,7 +198,7 @@ function setup1 {
    
     for ((i=1; i <= $NUM_RUNS; i++));
     do
-        sleep 60
+        sleep 5
         local RUN_RESULTS_DIR="${EXECUTION_RESULTS_DIR}/run-$i"
         mkdir -p $RUN_RESULTS_DIR
         { #EXECUTION PHASE
@@ -205,4 +208,4 @@ function setup1 {
     done
 }
 
-
+setup1

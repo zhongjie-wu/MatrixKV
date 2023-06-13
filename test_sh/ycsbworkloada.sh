@@ -16,7 +16,7 @@ num="40000000"
 
 max_background_jobs="3"
 #max_bytes_for_level_base="`expr 8 \* 1024 \* 1024 \* 1024`"   #8G
-max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
+# max_bytes_for_level_base="`expr 256 \* 1024 \* 1024`" 
 
 #perf_level="1"
 
@@ -75,21 +75,21 @@ FILL_PATAMS() {
         const_params=$const_params"--num=$num "
     fi
 
-    if [ -n "$reads" ];then
-        const_params=$const_params"--reads=$reads "
-    fi
+    # if [ -n "$reads" ];then
+    #     const_params=$const_params"--reads=$reads "
+    # fi
 
-    if [ -n "$max_background_jobs" ];then
-        const_params=$const_params"--max_background_jobs=$max_background_jobs "
-    fi
+    # if [ -n "$max_background_jobs" ];then
+    #     const_params=$const_params"--max_background_jobs=$max_background_jobs "
+    # fi
 
-    if [ -n "$max_bytes_for_level_base" ];then
-        const_params=$const_params"--max_bytes_for_level_base=$max_bytes_for_level_base "
-    fi
+    # if [ -n "$max_bytes_for_level_base" ];then
+    #     const_params=$const_params"--max_bytes_for_level_base=$max_bytes_for_level_base "
+    # fi
 
-    if [ -n "$perf_level" ];then
-        const_params=$const_params"--perf_level=$perf_level "
-    fi
+    # if [ -n "$perf_level" ];then
+    #     const_params=$const_params"--perf_level=$perf_level "
+    # fi
 
     if [ -n "$threads" ];then
         const_params=$const_params"--threads=$threads "
