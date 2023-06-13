@@ -140,7 +140,6 @@ DEFINE_string(
     "randomreplacekeys,"
     "timeseries,"
     "fillrandomcontrolrequest,"
-    "ycsbwklda,"
     ,
 
     "Comma-separated list of operations to run in the specified"
@@ -2753,8 +2752,6 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       }  else if (name == "fillrandomcontrolrequest") {  //////add 
         fresh_db = true;
         method = &Benchmark::FillRandomControlRequest;
-      } else if (name == "ycsbwklda") {
-        method = &Benchmark::YCSBWorkloadA;    /////
       } else if (name == "filluniquerandom") {
         fresh_db = true;
         if (num_threads > 1) {
@@ -4479,165 +4476,165 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     }
   }
 // Workload A: Update heavy workload
-  // This workload has a mix of 50/50 reads and writes. 
-  // An application example is a session store recording recent actions.
-  // Read/update ratio: 50/50
-  // Default data size: 1 KB records 
-  // Request distribution: zipfian
+//   This workload has a mix of 50/50 reads and writes. 
+//   An application example is a session store recording recent actions.
+//   Read/update ratio: 50/50
+//   Default data size: 1 KB records 
+//   Request distribution: zipfian
   
-  // void YCSBWorkloadA(ThreadState* thread) {
-  //   if( thread->tid == thread->shared->total - 1 ) {  //record latency and throughput per second
-  //     uint64_t start_time = thread->stats.GetStart();
-  //     uint64_t last_ops = 0;
-  //     uint64_t last_time = start_time;
-  //     uint64_t now_done = 0;
-  //     uint64_t per_second_done;
-  //     uint64_t now_time;
+  void YCSBWorkloadA(ThreadState* thread) {
+    if( thread->tid == thread->shared->total - 1 ) {  //record latency and throughput per second
+      uint64_t start_time = thread->stats.GetStart();
+      uint64_t last_ops = 0;
+      uint64_t last_time = start_time;
+      uint64_t now_done = 0;
+      uint64_t per_second_done;
+      uint64_t now_time;
       
-  //     while(true) {
-  //       if( thread->shared->num_done >= thread->shared->total - 1 ) break;
-  //       sleep(1);
+      while(true) {
+        if( thread->shared->num_done >= thread->shared->total - 1 ) break;
+        sleep(1);
         
-  //       now_time = FLAGS_env->NowMicros();
-  //       thread->shared->latencys_mutex.Lock();
-  //       now_done = thread->shared->ops_num;
-  //       thread->shared->latencys_mutex.Unlock();
+        now_time = FLAGS_env->NowMicros();
+        thread->shared->latencys_mutex.Lock();
+        now_done = thread->shared->ops_num;
+        thread->shared->latencys_mutex.Unlock();
 
-  //       per_second_done = now_done - last_ops;
-  //       double use_time = (now_time - last_time)*1e-6;
-  //       int64_t ebytes = (value_size_ + key_size_) * per_second_done;
-  //       int64_t now_bytes = (value_size_ + key_size_) * now_done;
-  //       double now = (now_time - start_time)*1e-6;
+        per_second_done = now_done - last_ops;
+        double use_time = (now_time - last_time)*1e-6;
+        int64_t ebytes = (value_size_ + key_size_) * per_second_done;
+        int64_t now_bytes = (value_size_ + key_size_) * now_done;
+        double now = (now_time - start_time)*1e-6;
 
-  //       RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops ,\n",
-  //                   now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now);
+        RECORD_INFO(1,"now=,%.2f,s speed=,%.2f,MB/s,%.1f,iops size=,%.1f,MB average=,%.2f,MB/s,%.1f,iops ,\n",
+                    now,(1.0*ebytes/1048576.0)/use_time,1.0*per_second_done/use_time,1.0*now_bytes/1048576.0,(1.0*now_bytes/1048576.0)/now,1.0*now_done/now);
         
-  //       uint64_t *ops_latency = thread->shared->latencys;
-  //       std::sort(ops_latency + last_ops, ops_latency + now_done);
-  //       /* for(uint64_t i = last_ops; i < now_done; i++) {
-  //         printf("%lu,%lu,%lu,%lu\n",i,ops_latency[i].stay_queue_time,ops_latency[i].execute_time,ops_latency[i].stay_queue_time + ops_latency[i].execute_time);
-  //       } */
-  //       if (per_second_done > 2) {
-  //         uint64_t cnt90 = 0.90 * per_second_done - 1 + last_ops;
-  //         uint64_t cnt99 = 0.99 * per_second_done - 1 + last_ops;
-  //         uint64_t cnt999 = 0.999 * per_second_done - 1 + last_ops;
-  //         uint64_t cnt9999 = 0.9999 * per_second_done - 1 + last_ops;
-  //         uint64_t cnt99999 = 0.99999 * per_second_done - 1 + last_ops;
+        uint64_t *ops_latency = thread->shared->latencys;
+        std::sort(ops_latency + last_ops, ops_latency + now_done);
+        /* for(uint64_t i = last_ops; i < now_done; i++) {
+          printf("%lu,%lu,%lu,%lu\n",i,ops_latency[i].stay_queue_time,ops_latency[i].execute_time,ops_latency[i].stay_queue_time + ops_latency[i].execute_time);
+        } */
+        if (per_second_done > 2) {
+          uint64_t cnt90 = 0.90 * per_second_done - 1 + last_ops;
+          uint64_t cnt99 = 0.99 * per_second_done - 1 + last_ops;
+          uint64_t cnt999 = 0.999 * per_second_done - 1 + last_ops;
+          uint64_t cnt9999 = 0.9999 * per_second_done - 1 + last_ops;
+          uint64_t cnt99999 = 0.99999 * per_second_done - 1 + last_ops;
 
-  //         //printf("per_second_done:%lu,last_ops:%lu,cnt90:%lu,cnt99:%lu,%lu,%lu,%lu\n",per_second_done,last_ops,cnt90,cnt99,cnt999,cnt9999,cnt99999);
+          //printf("per_second_done:%lu,last_ops:%lu,cnt90:%lu,cnt99:%lu,%lu,%lu,%lu\n",per_second_done,last_ops,cnt90,cnt99,cnt999,cnt9999,cnt99999);
 
-  //         RECORD_INFO(5,"%.2f,%.1f,%lu,,,%lu,,,%lu,,,%lu,,,%lu,,,\n",
-  //                   now,1.0*per_second_done/use_time,
-  //                   ops_latency[cnt90],
-  //                   ops_latency[cnt99],
-  //                   ops_latency[cnt999],
-  //                   ops_latency[cnt9999],
-  //                   ops_latency[cnt99999]);
-  //       }
+          RECORD_INFO(5,"%.2f,%.1f,%lu,,,%lu,,,%lu,,,%lu,,,%lu,,,\n",
+                    now,1.0*per_second_done/use_time,
+                    ops_latency[cnt90],
+                    ops_latency[cnt99],
+                    ops_latency[cnt999],
+                    ops_latency[cnt9999],
+                    ops_latency[cnt99999]);
+        }
         
 
-  //       last_ops = now_done;
-  //       last_time = now_time;
+        last_ops = now_done;
+        last_time = now_time;
 
-  //     }
-  //   return;
-  //   }
+      }
+    return;
+    }
 
-  //   ReadOptions options(FLAGS_verify_checksum, true);
-  //   RandomGenerator gen;
+    ReadOptions options(FLAGS_verify_checksum, true);
+    RandomGenerator gen;
     
-  //   init_zipf_generator(0, FLAGS_num);
+    init_zipf_generator(0, FLAGS_num);
     
-  //   std::string value;
-  //   int64_t found = 0;
-  //   uint64_t per_op_start_time = 0;
+    std::string value;
+    int64_t found = 0;
+    uint64_t per_op_start_time = 0;
 
-  //   int64_t reads_done = 0;
-  //   int64_t writes_done = 0;
-  //   Duration duration(FLAGS_duration, FLAGS_ycsb_workloada_num);
+    int64_t reads_done = 0;
+    int64_t writes_done = 0;
+    Duration duration(FLAGS_duration, FLAGS_ycsb_workloada_num);
 
-  //   std::unique_ptr<const char[]> key_guard;
-  //   Slice key = AllocateKey(&key_guard);
+    std::unique_ptr<const char[]> key_guard;
+    Slice key = AllocateKey(&key_guard);
 
-  //   if (FLAGS_benchmark_write_rate_limit > 0) {
-  //      printf(">>>> FLAGS_benchmark_write_rate_limit YCSBA \n");
-  //     thread->shared->write_rate_limiter.reset(
-  //         NewGenericRateLimiter(FLAGS_benchmark_write_rate_limit));
-  //   }
+    if (FLAGS_benchmark_write_rate_limit > 0) {
+       printf(">>>> FLAGS_benchmark_write_rate_limit YCSBA \n");
+      thread->shared->write_rate_limiter.reset(
+          NewGenericRateLimiter(FLAGS_benchmark_write_rate_limit));
+    }
     
-  //   // the number of iterations is the larger of read_ or write_
-  //   while (!duration.Done(1)) {
-  //     DB* db = SelectDB(thread);
+    // the number of iterations is the larger of read_ or write_
+    while (!duration.Done(1)) {
+      DB* db = SelectDB(thread);
        
-  //     long k;
-  //     if (FLAGS_YCSB_uniform_distribution){
-  //       //Generate number from uniform distribution            
-  //       k = thread->rand.Next() % FLAGS_num;
-  //     } else { //default
-  //       //Generate number from zipf distribution
-  //       k = nextValue() % FLAGS_num;            
-  //     }
-  //     GenerateKeyFromInt(k, FLAGS_num, &key);
+      long k;
+      if (FLAGS_YCSB_uniform_distribution){
+        //Generate number from uniform distribution            
+        k = thread->rand.Next() % FLAGS_num;
+      } else { //default
+        //Generate number from zipf distribution
+        k = nextValue() % FLAGS_num;            
+      }
+      GenerateKeyFromInt(k, FLAGS_num, &key);
 
-  //     if (FLAGS_report_ops_latency) {   //
-  //       per_op_start_time = FLAGS_env->NowMicros();
-  //     }
+      if (FLAGS_report_ops_latency) {   //
+        per_op_start_time = FLAGS_env->NowMicros();
+      }
 
-  //     int next_op = thread->rand.Next() % 100;
-  //     if (next_op < 50){
-  //       //read
-  //       Status s = db->Get(options, key, &value);
-  //       if (!s.ok() && !s.IsNotFound()) {
-  //         fprintf(stderr, "k=%ld; get error: %s\n", k, s.ToString().c_str());
-  //         //exit(1);
-  //         // we continue after error rather than exiting so that we can
-  //         // find more errors if any
-  //       } else if (!s.IsNotFound()) {
-  //         found++;
-  //         //thread->stats.FinishedOps(nullptr, db, 1, kRead);
-  //       }
-  //       thread->stats.FinishedOps(nullptr, db, 1, kRead);  //not found is normal operation
-  //       reads_done++;
+      int next_op = thread->rand.Next() % 100;
+      if (next_op < 50){
+        //read
+        Status s = db->Get(options, key, &value);
+        if (!s.ok() && !s.IsNotFound()) {
+          fprintf(stderr, "k=%ld; get error: %s\n", k, s.ToString().c_str());
+          //exit(1);
+          // we continue after error rather than exiting so that we can
+          // find more errors if any
+        } else if (!s.IsNotFound()) {
+          found++;
+          //thread->stats.FinishedOps(nullptr, db, 1, kRead);
+        }
+        thread->stats.FinishedOps(nullptr, db, 1, kRead);  //not found is normal operation
+        reads_done++;
         
-  //     } else{
-  //       //write
-  //       if (FLAGS_benchmark_write_rate_limit > 0) {
+      } else{
+        //write
+        if (FLAGS_benchmark_write_rate_limit > 0) {
             
-  //           thread->shared->write_rate_limiter->Request(
-  //               value_size_ + key_size_, Env::IO_HIGH,
-  //               nullptr /* stats */, RateLimiter::OpType::kWrite);
-  //           thread->stats.ResetLastOpTime();
-  //       }
+            thread->shared->write_rate_limiter->Request(
+                value_size_ + key_size_, Env::IO_HIGH,
+                nullptr /* stats */, RateLimiter::OpType::kWrite);
+            thread->stats.ResetLastOpTime();
+        }
 
-  //       if (FLAGS_report_ops_latency) {   //
-  //         per_op_start_time = FLAGS_env->NowMicros();
-  //       }
+        if (FLAGS_report_ops_latency) {   //
+          per_op_start_time = FLAGS_env->NowMicros();
+        }
 
-  //       Status s = db->Put(write_options_, key, gen.Generate(value_size_));
-  //       if (!s.ok()) {
-  //         fprintf(stderr, "put error: %s\n", s.ToString().c_str());
-  //         //exit(1);
-  //       } else{
-  //         writes_done++;
-  //         thread->stats.FinishedOps(nullptr, db, 1, kWrite);
-  //       }                
-  //     }
+        Status s = db->Put(write_options_, key, gen.Generate(value_size_));
+        if (!s.ok()) {
+          fprintf(stderr, "put error: %s\n", s.ToString().c_str());
+          //exit(1);
+        } else{
+          writes_done++;
+          thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+        }                
+      }
 
-  //     if (FLAGS_report_ops_latency) {   //
+      if (FLAGS_report_ops_latency) {   //
 
-  //       thread->shared->latencys_mutex.Lock();
-  //       thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_op_start_time;
-  //       thread->shared->ops_num++;
-  //       thread->shared->latencys_mutex.Unlock();
-  //     }
+        thread->shared->latencys_mutex.Lock();
+        thread->shared->latencys[thread->shared->ops_num] = FLAGS_env->NowMicros() - per_op_start_time;
+        thread->shared->ops_num++;
+        thread->shared->latencys_mutex.Unlock();
+      }
 
-  //   } 
-  //   char msg[100];
-  //   snprintf(msg, sizeof(msg), "( reads:%" PRIu64 " writes:%" PRIu64 \
-  //            " total:%" PRIu64 " found:%" PRIu64 ")",
-  //            reads_done, writes_done, FLAGS_ycsb_workloada_num, found);
-  //   thread->stats.AddMessage(msg);
-  // }
+    } 
+    char msg[100];
+    snprintf(msg, sizeof(msg), "( reads:%" PRIu64 " writes:%" PRIu64 \
+             " total:%" PRIu64 " found:%" PRIu64 ")",
+             reads_done, writes_done, FLAGS_ycsb_workloada_num, found);
+    thread->stats.AddMessage(msg);
+  }
 
 
 /////
@@ -4990,72 +4987,72 @@ void VerifyDBFromDB(std::string& truth_db_name) {
   // Read/update ratio: 50/50
   // Default data size: 1 KB records 
   // Request distribution: zipfian
-  void YCSBWorkloadA(ThreadState* thread) {
-    ReadOptions options(FLAGS_verify_checksum, true);
-    RandomGenerator gen;
-    init_latestgen(FLAGS_num);
-    init_zipf_generator(0, FLAGS_num);
+  // void YCSBWorkloadA(ThreadState* thread) {
+  //   ReadOptions options(FLAGS_verify_checksum, true);
+  //   RandomGenerator gen;
+  //   init_latestgen(FLAGS_num);
+  //   init_zipf_generator(0, FLAGS_num);
 
-    std::string value;
-    int64_t found = 0;
+  //   std::string value;
+  //   int64_t found = 0;
 
-    int64_t reads_done = 0;
-    int64_t writes_done = 0;
-    Duration duration(FLAGS_duration, FLAGS_num);
+  //   int64_t reads_done = 0;
+  //   int64_t writes_done = 0;
+  //   Duration duration(FLAGS_duration, FLAGS_num);
 
-    std::unique_ptr<const char[]> key_guard;
-    Slice key = AllocateKey(&key_guard);
+  //   std::unique_ptr<const char[]> key_guard;
+  //   Slice key = AllocateKey(&key_guard);
 
-    // the number of iterations is the larger of read_ or write_
-    while (!duration.Done(1)) {
-      DB* db = SelectDB(thread);
+  //   // the number of iterations is the larger of read_ or write_
+  //   while (!duration.Done(1)) {
+  //     DB* db = SelectDB(thread);
 
-          long k;
-          if (FLAGS_YCSB_uniform_distribution){
-            //Generate number from uniform distribution            
-            k = thread->rand.Next() % FLAGS_num;
-          } else { //default
-            //Generate number from zipf distribution
-            k = nextValue() % FLAGS_num;            
-          }
-          GenerateKeyFromInt(k, FLAGS_num, &key);
+  //         long k;
+  //         if (FLAGS_YCSB_uniform_distribution){
+  //           //Generate number from uniform distribution            
+  //           k = thread->rand.Next() % FLAGS_num;
+  //         } else { //default
+  //           //Generate number from zipf distribution
+  //           k = nextValue() % FLAGS_num;            
+  //         }
+  //         GenerateKeyFromInt(k, FLAGS_num, &key);
 
-          int next_op = thread->rand.Next() % 100;
-          if (next_op < 50){
-            //read
-            Status s = db->Get(options, key, &value);
-            if (!s.ok() && !s.IsNotFound()) {
-              //fprintf(stderr, "k=%d; get error: %s\n", k, s.ToString().c_str());
-              //exit(1);
-              // we continue after error rather than exiting so that we can
-              // find more errors if any
-            } else if (!s.IsNotFound()) {
-              found++;
-              thread->stats.FinishedOps(nullptr, db, 1, kRead);
-            }
-            reads_done++;
+  //         int next_op = thread->rand.Next() % 100;
+  //         if (next_op < 50){
+  //           //read
+  //           Status s = db->Get(options, key, &value);
+  //           if (!s.ok() && !s.IsNotFound()) {
+  //             //fprintf(stderr, "k=%d; get error: %s\n", k, s.ToString().c_str());
+  //             //exit(1);
+  //             // we continue after error rather than exiting so that we can
+  //             // find more errors if any
+  //           } else if (!s.IsNotFound()) {
+  //             found++;
+  //             thread->stats.FinishedOps(nullptr, db, 1, kRead);
+  //           }
+  //           reads_done++;
 
-          } else{
+  //         } else{
 
-            Status s = db->Put(write_options_, key, gen.Generate(value_size_));
-            if (!s.ok()) {
-              //fprintf(stderr, "put error: %s\n", s.ToString().c_str());
-              //exit(1);
-            } else{
-             writes_done++;
-             thread->stats.FinishedOps(nullptr, db, 1, kWrite);
-            }                
-      }
+  //           Status s = db->Put(write_options_, key, gen.Generate(value_size_));
+  //           if (!s.ok()) {
+  //             //fprintf(stderr, "put error: %s\n", s.ToString().c_str());
+  //             //exit(1);
+  //           } else{
+  //            writes_done++;
+  //            thread->stats.FinishedOps(nullptr, db, 1, kWrite);
+  //           }                
+  //     }
 
 
 
-    } 
-    char msg[100];
-    snprintf(msg, sizeof(msg), "( reads:%" PRIu64 " writes:%" PRIu64 \
-             " total:%" PRIu64 " found:%" PRIu64 ")",
-             reads_done, writes_done, readwrites_, found);
-    thread->stats.AddMessage(msg);
-  }
+  //   } 
+  //   char msg[100];
+  //   snprintf(msg, sizeof(msg), "( reads:%" PRIu64 " writes:%" PRIu64 \
+  //            " total:%" PRIu64 " found:%" PRIu64 ")",
+  //            reads_done, writes_done, readwrites_, found);
+  //   thread->stats.AddMessage(msg);
+  // }
 
   // Workload B: Read mostly workload
   // This workload has a 95/5 reads/write mix. 
