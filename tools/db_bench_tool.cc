@@ -140,7 +140,6 @@ DEFINE_string(
     "randomreplacekeys,"
     "timeseries,"
     "fillrandomcontrolrequest,"
-    "ycsbwklda,"
     ,
 
     "Comma-separated list of operations to run in the specified"
@@ -2753,8 +2752,6 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       }  else if (name == "fillrandomcontrolrequest") {  //////add 
         fresh_db = true;
         method = &Benchmark::FillRandomControlRequest;
-      } else if (name == "ycsbwklda") {
-        method = &Benchmark::YCSBWorkloadA;    /////
       } else if (name == "filluniquerandom") {
         fresh_db = true;
         if (num_threads > 1) {
@@ -2816,18 +2813,25 @@ void VerifyDBFromDB(std::string& truth_db_name) {
       } else if (name == "deleterandom") {
         method = &Benchmark::DeleteRandom;
       } else if (name == "ycsbwklda") {
+        num_threads = FLAGS_threads;
         method = &Benchmark::YCSBWorkloadA;
       } else if (name == "ycsbwkldb") {
+        num_threads = FLAGS_threads;
         method = &Benchmark::YCSBWorkloadB;
       } else if (name == "ycsbwkldc") {
+        num_threads = FLAGS_threads;
         method = &Benchmark::YCSBWorkloadC;
       } else if (name == "ycsbwkldd") {
+        num_threads = FLAGS_threads;
         method = &Benchmark::YCSBWorkloadD;
       } else if (name == "ycsbwklde") {
+        num_threads = FLAGS_threads;
         method = &Benchmark::YCSBWorkloadE;
       } else if (name == "ycsbwkldf") {
+        num_threads = FLAGS_threads;
         method = &Benchmark::YCSBWorkloadF;
       } else if (name == "ycsbfill") {
+        num_threads = 1;
         method = &Benchmark::YCSBFillDB;
       } else if (name == "readwhilewriting") {
         num_threads++;  // Add extra thread for writing
@@ -4479,11 +4483,11 @@ void VerifyDBFromDB(std::string& truth_db_name) {
     }
   }
 // Workload A: Update heavy workload
-  // This workload has a mix of 50/50 reads and writes. 
-  // An application example is a session store recording recent actions.
-  // Read/update ratio: 50/50
-  // Default data size: 1 KB records 
-  // Request distribution: zipfian
+//   This workload has a mix of 50/50 reads and writes. 
+//   An application example is a session store recording recent actions.
+//   Read/update ratio: 50/50
+//   Default data size: 1 KB records 
+//   Request distribution: zipfian
   
   // void YCSBWorkloadA(ThreadState* thread) {
   //   if( thread->tid == thread->shared->total - 1 ) {  //record latency and throughput per second
@@ -4954,7 +4958,7 @@ void VerifyDBFromDB(std::string& truth_db_name) {
 
     int64_t reads_done = 0;
     int64_t writes_done = 0;
-    Duration duration(FLAGS_duration, FLAGS_num);
+    Duration duration(18446744073709551615, FLAGS_num);
 
     std::unique_ptr<const char[]> key_guard;
     Slice key = AllocateKey(&key_guard);
